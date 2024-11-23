@@ -1513,48 +1513,16 @@ class Device(object):
         self.has_buffer = False  # needs to be set for remote_eval to work
         self.time_offset = 0
         self.adjust_for_timezone = False
-        self.sysname = ''
-        QUIET or print('Retrieving sysname ... ', end='', flush=True)
-        self.sysname = self.remote_eval(sysname)
-        QUIET or print(self.sysname)
-        if not ASCII_XFER:
-            QUIET or print('Testing if sys.stdin.buffer exists ... ', end='', flush=True)
-            self.has_buffer = self.remote_eval(test_buffer)
-            QUIET or print('Y' if self.has_buffer else 'N')
-        else:
-            QUIET or print('Testing if ubinascii.unhexlify exists ... ', end='', flush=True)
-            unhexlify_exists = self.remote_eval(test_unhexlify)
-            QUIET or print('Y' if unhexlify_exists else 'N')
-            if not unhexlify_exists:
-                raise ShellError('rshell needs MicroPython firmware with ubinascii.unhexlify')
+        self.sysname = 'esp32'
+        
         QUIET or print('Retrieving root directories ... ', end='', flush=True)
         self.root_dirs = ['/{}/'.format(dir) for dir in self.remote_eval(listdir, '/')]
         QUIET or print(' '.join(self.root_dirs))
-        QUIET or print('Setting time ... ', end='', flush=True)
-        now = self.sync_time()
-        QUIET or print(time.strftime('%b %d, %Y %H:%M:%S', now))
-        QUIET or print('Evaluating board_name ... ', end='', flush=True)
-        self.name, messages = self.remote_eval_last(board_name, self.default_board_name())
-        QUIET or print(self.name)
-        if (len(messages) > 0) and not QUIET:
-            print('----- Prints from board.py ----')
-            print(messages)
-            print('----')
+        
+        self.name = 'pyboard'
+        
         self.dev_name_short = self.name
-        QUIET or print('Retrieving time epoch ... ', end='', flush=True)
-        epoch_tuple = self.remote_eval(get_time_epoch)
-        if len(epoch_tuple) == 8:
-            epoch_tuple = epoch_tuple + (0,)
-        QUIET or print(time.strftime('%b %d, %Y', epoch_tuple))
 
-        self.time_offset = calendar.timegm(epoch_tuple)
-        # The pyboard maintains its time as localtime, whereas unix and
-        # esp32 maintain their time as GMT.
-        if self.sysname == 'rp2':
-            # The Pico uses a 1970 epoch, but uses localtime
-            self.adjust_for_timezone = True
-        else:
-            self.adjust_for_timezone = (epoch_tuple[0] != 1970)
 
 
     def check_pyb(self):
